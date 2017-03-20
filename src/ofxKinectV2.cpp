@@ -113,7 +113,7 @@ void ofxKinectV2::threadedFunction(){
 }
 
 //--------------------------------------------------------------------------------
-void ofxKinectV2::update(){
+void ofxKinectV2::update(bool convertDepthPix){
     if( ofGetFrameNum() != lastFrameNo ){
         bNewFrame = false;
         lastFrameNo = ofGetFrameNum();
@@ -126,22 +126,24 @@ void ofxKinectV2::update(){
             bNewBuffer = false;
         unlock();
         
-        if( rawDepthPixels.size() > 0 ){
-            if( depthPix.getWidth() != rawDepthPixels.getWidth() ){
-                depthPix.allocate(rawDepthPixels.getWidth(), rawDepthPixels.getHeight(), 1);
-            }
-        
-            float * pixelsF         = rawDepthPixels.getData();
-            unsigned char * pixels  = depthPix.getData();
-                
-            for(int i = 0; i < depthPix.size(); i++){
-                pixels[i] = ofMap(rawDepthPixels[i], minDistance, maxDistance, 255, 0, true);
-                if( pixels[i] == 255 ){
-                    pixels[i] = 0;
-                }
-            }
+		if (convertDepthPix) {
+			if (rawDepthPixels.size() > 0) {
+				if (depthPix.getWidth() != rawDepthPixels.getWidth()) {
+					depthPix.allocate(rawDepthPixels.getWidth(), rawDepthPixels.getHeight(), 1);
+				}
 
-        }
+				float * pixelsF = rawDepthPixels.getData();
+				unsigned char * pixels = depthPix.getData();
+
+				for (int i = 0; i < depthPix.size(); i++) {
+					pixels[i] = ofMap(rawDepthPixels[i], minDistance, maxDistance, 255, 0, true);
+					if (pixels[i] == 255) {
+						pixels[i] = 0;
+					}
+				}
+
+			}
+		}
         
         
         bNewFrame = true; 
@@ -154,17 +156,17 @@ bool ofxKinectV2::isFrameNew(){
 }
 
 //--------------------------------------------------------------------------------
-ofPixels ofxKinectV2::getDepthPixels(){
+ofPixels& ofxKinectV2::getDepthPixels(){
     return depthPix;
 }
 
 //--------------------------------------------------------------------------------
-ofFloatPixels ofxKinectV2::getRawDepthPixels(){
+ofFloatPixels& ofxKinectV2::getRawDepthPixels(){
     return rawDepthPixels;
 }
 
 //--------------------------------------------------------------------------------
-ofPixels ofxKinectV2::getRgbPixels(){
+ofPixels& ofxKinectV2::getRgbPixels(){
     return rgbPix; 
 }
 
@@ -177,4 +179,29 @@ void ofxKinectV2::close(){
     }
 }
 
+//--------------------------------------------------------------------------------
+float ofxKinectV2::getDistanceAt(int x, int y) {
+	if (!depthPix.isAllocated()) {
+		return 0.0f;
+	}
+	return depthPix[x + y * depthPix.getWidth()] * 0.1; // mm to cm
+}
 
+//--------------------------------------------------------------------------------
+// TODO: use undistorted
+ofVec3f ofxKinectV2::getWorldCoordinateAt(int x, int y) {
+	return getWorldCoordinateAt(x, y, getDistanceAt(x, y));
+}
+
+//--------------------------------------------------------------------------------
+ofVec3f ofxKinectV2::getWorldCoordinateAt(int x, int y, float z) {
+	libfreenect2::Freenect2Device::IrCameraParams p;
+	ofVec3f world;
+
+	p = *this->protonect.getIrCameraParams();
+	world.z = z;
+	world.x = (x - p.cx) * z / p.fx;
+	world.y = -(y - p.cy) * z / p.fy;
+
+	return world;
+}
