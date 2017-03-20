@@ -65,9 +65,5 @@ class ofxKinectV2 : public ofThread{
         ofFloatPixels depthPixelsBack;
         ofFloatPixels depthPixelsFront;
 
-        vector <ofPoint> pointCloudFront;
-        vector <ofPoint> pointCloudBack;
-        vector <ofPoint> pointCloud;
-
         int lastFrameNo; 
 };
