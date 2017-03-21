@@ -30,19 +30,19 @@ class ofxKinectV2 : public ofThread{
     
         bool open(string serial);
         bool open(unsigned int deviceId = 0);
-		void update(bool convertDepthPix = true);
+        void update();
         void close();
     
         bool isFrameNew();
     
-        ofPixels& getDepthPixels();
-        ofPixels& getRgbPixels();
-        ofFloatPixels& getRawDepthPixels();
-
-		float getDistanceAt(int x, int y);
-		ofVec3f getWorldCoordinateAt(int x, int y);
-		ofVec3f getWorldCoordinateAt(int x, int y, float z);
-
+        ofPoint getWorldCoordinateAt(int x, int y);
+        ofPoint getWorldCoordinateAt(int x, int y, int z);
+        vector <ofPoint> getWorldCoordinates();
+    
+        ofPixels getDepthPixels();
+        ofPixels getRgbPixels();
+        ofFloatPixels getRawDepthPixels();
+    
         ofParameterGroup params;
         ofParameter <float> minDistance;
         ofParameter <float> maxDistance;
@@ -64,6 +64,10 @@ class ofxKinectV2 : public ofThread{
         ofPixels rgbPixelsFront;
         ofFloatPixels depthPixelsBack;
         ofFloatPixels depthPixelsFront;
+    
+        vector <ofPoint> pointCloudFront;
+        vector <ofPoint> pointCloudBack;
+        vector <ofPoint> pointCloud;
 
         int lastFrameNo; 
 };
